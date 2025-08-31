@@ -1,0 +1,68 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+<style>
+    .dx-datagrid {
+        font: 11px verdana;
+        height: calc(100vh - 200px);
+        width: calc(100vw - 930px);
+    }
+</style>
+
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-1">
+            <div class="col-sm-6">
+                <h4 class="m-0">
+                </h4>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="~/Production">@ViewData["currentMenuName"]</a></li>
+                    <li class="breadcrumb-item active">Bill of Material</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+
+<link rel="stylesheet" href="~/css/devextreme/dx.light.css" />
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="row">
+                    <div id="dataGridFG"></div>
+                    <div id="myPopupFGEdit" class="dx-popup"></div>
+                    <div id="myPopupFGAdd" class="dx-popup"></div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="row">
+                        <div id="dataGridRM"></div>
+                        <div id="myPopupRMEdit" class="dx-popup"></div>
+                        <div id="myPopupRMAdd" class="dx-popup"></div>
+                    </div>
+                    <div class="row mt-1">
+                        <div id="dataGridCP"></div>
+                        <div id="myPopupCPEdit" class="dx-popup"></div>
+                        <div id="myPopupCPAdd" class="dx-popup"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</section>
+
+@section gridjs
+{
+    <!-- Main content -->
+    <script src="~/js/popupgridbom.js"></script>
+}
