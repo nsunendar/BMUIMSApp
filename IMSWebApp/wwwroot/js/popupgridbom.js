@@ -58,17 +58,22 @@ $(document).ready(function () {
                     widget: "dxButton",
                     options: {
                         icon: "fa fa-file",
-                        hint: "Add New InventoryId",
+                        hint: "Add New FG",
                         onClick: function () {
                             openPopupInvTypeAdd();
                         }
                     },
                     location: "before"
+                },
+                {
+                    template: '<div>Finish Good &nbsp;&nbsp;&nbsp;</div>',
+                    location: "after"
                 }
             ]
         },
         onSelectionChanged: function (e) {
             dataGridRM.getDataSource().reload();
+            dataGridCP.getDataSource().reload();
         }
     }).dxDataGrid("instance");
 
@@ -129,15 +134,22 @@ $(document).ready(function () {
                     widget: "dxButton",
                     options: {
                         icon: "fa fa-file",
-                        hint: "Add New InventoryId",
+                        hint: "Add New RM",
                         onClick: function () {
                             openPopupInvTypeAdd();
                         }
                     },
                     location: "before"
+                },
+                {
+                    template: '<div>Raw Material &nbsp;&nbsp;&nbsp;</div>',
+                    location: "after"
                 }
             ]
         },
+        onSelectionChanged: function (e) {
+            dataGridCP.getDataSource().reload();
+        }
     }).dxDataGrid("instance");
 
     var LevelCPStore = new DevExpress.data.CustomStore({
@@ -194,12 +206,16 @@ $(document).ready(function () {
                     widget: "dxButton",
                     options: {
                         icon: "fa fa-file",
-                        hint: "Add New InventoryId",
+                        hint: "Add New CP",
                         onClick: function () {
                             openPopupInvTypeAdd();
                         }
                     },
                     location: "before"
+                },
+                {
+                    template: '<div>Child Parts &nbsp;&nbsp;&nbsp;</div>',
+                    location: "after"
                 }
             ]
         },
