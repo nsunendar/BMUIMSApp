@@ -29,7 +29,7 @@ namespace IMSWebApp.Controllers.Production
         [Route("/Production/BillOfMaterial")]
         public async Task<IActionResult> Index()
         {
-            var currentMenu = "MDM";
+            var currentMenu = "PRD";
             var userName = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName"));
             ViewData["userName"] = userName;
             ViewData["currentMenu"] = currentMenu;
@@ -139,187 +139,170 @@ namespace IMSWebApp.Controllers.Production
             }
         }
 
+        [HttpGet]
+        [Route("Production/BillOfMaterial/Edit")]
+        public async Task<IActionResult> EditBOM(int id, DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                string apiKey = _configuration["ApiKey"];
+                client.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                string apiUrl = _configuration["ApiEndpoint"] + _configuration["BOMInventoryByIdEndpoint"];
 
-        //[Authorize]
-        //[HttpGet]
-        //[Route("/Production/BillOfMaterial")]
-        //public async Task<IActionResult> Index()
-        //{
-        //    var currentMenu = "PRD";
-        //    var userName = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName"));
-        //    ViewData["userName"] = userName;
-        //    ViewData["currentMenu"] = currentMenu;
-        //    ViewData["currentMenuName"] = "Production Management";
-        //    ViewData["MenuItems"] = await api.GetSideMenu(_configuration["ApiEndpoint"] + _configuration["MenuItemModulEndpoint"], _configuration["ApiKey"], _httpClientFactory.CreateClient(), new StringContent(JsonConvert.SerializeObject(new SPParameters { USERNAME = userName, DATA = currentMenu }), Encoding.UTF8, "application/json"));
-        //    return View();
-        //}
-
-        //[Authorize]
-        //[HttpGet]
-        //[Route("Production/BillOfMaterial/GetData")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> GetData(DataSourceLoadOptions loadOptions)
-        //{
-        //    try
-        //    {
-        //        string dataVal = HttpContext.Request.Headers["Options"];
-
-        //        if (string.IsNullOrEmpty(dataVal))
-        //        {
-        //            return StatusCode(200, "Cannot get BillOfMaterial Options is NULL");
-        //        }
-
-        //        var client = _httpClientFactory.CreateClient();
-        //        string apiKey = _configuration["ApiKey"];
-        //        client.DefaultRequestHeaders.Add("ApiKey", apiKey);
-        //        string apiUrl = _configuration["ApiEndpoint"] + _configuration["BOMInventoryGetEndpoint"];
-
-        //        var param = new SPParameters
-        //        {
-        //            USERNAME = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName")),
-        //            ACTIVEBRANCH = "BMU",
-        //            DATA = dataVal,
-        //        };
-
-        //        var json = JsonConvert.SerializeObject(param);
-        //        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        //        HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                var json = JsonConvert.SerializeObject(id);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
 
 
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            string responseContent = await response.Content.ReadAsStringAsync();
-        //            List<BOMItem> dataList = JsonConvert.DeserializeObject<List<BOMItem>>(responseContent);
-        //            return Ok(DataSourceLoader.Load(dataList, loadOptions));
-        //        }
-        //        else
-        //        {
-        //            var errorResponse = await response.Content.ReadAsStringAsync();
-        //            return StatusCode((int)response.StatusCode, errorResponse);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
-        //    }
-        //}
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    var bomList = JsonConvert.DeserializeObject<List<BOMItems>>(responseContent);
+                    var bomItem = bomList.FirstOrDefault(i => i.Id == id);
+                    return PartialView("_BOMEdit", bomItem);
+                }
+                else
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, errorResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
 
-        //[HttpGet]
-        //[Route("Production/BillOfMaterial/Edit")]
-        //public async Task<IActionResult> EditBOM(int id, DataSourceLoadOptions loadOptions)
-        //{
-        //    try
-        //    {
-        //        var client = _httpClientFactory.CreateClient();
-        //        string apiKey = _configuration["ApiKey"];
-        //        client.DefaultRequestHeaders.Add("ApiKey", apiKey);
-        //        string apiUrl = _configuration["ApiEndpoint"] + _configuration["BOMInventoryByIdEndpoint"];
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        [Route("Production/BillOfMaterial/UpdateBOMFG")]
+        public async Task<IActionResult> UpdateBOMFG()
+        {
+            try
+            {
+                var form = await HttpContext.Request.ReadFormAsync();
+                if (form == null)
+                {
+                    return BadRequest("No form data received");
+                }
 
-        //        var json = JsonConvert.SerializeObject(id);
-        //        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        //        HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                var sBussCode = form["BussCode"];
+                var sPlantCode = form["PlantCode"];
+                var sItemName = form["ItemName"];
+                var sStatus = form["Status"] == "on" ? true : false;
+                var sQtyUsage = Convert.ToDecimal(form["QtyUsage"]);
+                var sSatuan = form["Satuan"];
+                //var sLevelSeqn = Convert.ToInt32("1");
+                //var sParentId = form["ParentId"];
+                //var sParentItem = form["ParentItem"];
+                //var sInsertUser = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName"));
 
+                var brand = new BOMItems
+                {
+                    BussCode = sBussCode,
+                    PlantCode = sPlantCode,
+                    ItemName = sItemName,
+                    Status = sStatus,
+                    QtyUsage = sQtyUsage,
+                    Satuan = sSatuan,
+                    LevelSeqn = 0,
+                    ParentId = 0,
+                    ParentItem = ""
+                };
 
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            string responseContent = await response.Content.ReadAsStringAsync();
-        //            var bomList = JsonConvert.DeserializeObject<List<BOMInventory>>(responseContent);
-        //            var bomInv = bomList.FirstOrDefault(i => i.Id == id);
-        //            return PartialView("_BOMEdit", bomInv);
-        //        }
-        //        else
-        //        {
-        //            var errorResponse = await response.Content.ReadAsStringAsync();
-        //            return StatusCode((int)response.StatusCode, errorResponse);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
-        //    }
-        //}
+                var json = JsonConvert.SerializeObject(brand);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        ////GetVendorCode
-        //[HttpGet]
-        //[Route("Production/BillOfMaterial/GetInventoryFG")]
-        //public async Task<IActionResult> GetInventoryFG(DataSourceLoadOptions loadOptions)
-        //{
-        //    try
-        //    {
-        //        var client = _httpClientFactory.CreateClient();
-        //        string apiKey = _configuration["ApiKey"];
-        //        client.DefaultRequestHeaders.Add("ApiKey", apiKey);
-        //        string apiUrl = _configuration["ApiEndpoint"] + _configuration["GetInventoryFGEndpoint"];
-        //        HttpResponseMessage response = await client.GetAsync(apiUrl);
+                var client = _httpClientFactory.CreateClient();
+                string apiKey = _configuration["ApiKey"];
+                client.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                string apiUrl = _configuration["ApiEndpoint"] + _configuration["InvBrandUpdateEndpoint"];
 
+                HttpResponseMessage response = await client.PutAsync(apiUrl, content);
 
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            string responseContent = await response.Content.ReadAsStringAsync();
-        //            var InventoryFG = JsonConvert.DeserializeObject<List<SelectedBoxValues>>(responseContent);
-        //            return Ok(InventoryFG);
-        //        }
-        //        else
-        //        {
-        //            var errorResponse = await response.Content.ReadAsStringAsync();
-        //            return StatusCode((int)response.StatusCode, errorResponse);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
-        //    }
-        //}
+                if (response.IsSuccessStatusCode)
+                {
+                    return Ok(new { message = "Brand updated successfully.!" });
+                }
+                else
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, errorResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
 
-        //[Authorize]
-        //[HttpGet]
-        //[Route("Production/BillOfMaterial/GetBOMMaterials")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> GetBOMMaterials(DataSourceLoadOptions loadOptions)
-        //{
-        //    try
-        //    {
-        //        string dataVal = HttpContext.Request.Headers["Options"];
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        [Route("Production/BillOfMaterial/InsertBOMFG")]
+        public async Task<IActionResult> InsertBOMFG()
+        {
+            try
+            {
+                var form = await HttpContext.Request.ReadFormAsync();
+                if (form == null)
+                {
+                    return BadRequest("No form data received");
+                }
 
-        //        if (string.IsNullOrEmpty(dataVal))
-        //        {
-        //            return StatusCode(200, "Cannot get Mutation Options is NULL");
-        //        }
+                var sBussCode = form["BussCode"];
+                var sPlantCode = form["PlantCode"];
+                var sItemName = form["ItemName"];
+                var sStatus = form["Status"] == "on" ? true : false;
+                var sQtyUsage = Convert.ToDecimal(form["QtyUsage"]);
+                var sSatuan = form["Satuan"];
+                //var sLevelSeqn = Convert.ToInt32("1");
+                var sParentId = Convert.ToInt32(string.IsNullOrEmpty(form["ParentId"]) ? 0 : form["ParentId"]);  //form["ParentId"];
+                var sParentItem = string.IsNullOrEmpty(form["ParentItem"]) ? "" : form["ParentItem"]);  //form["ParentItem"];
+                //var sInsertUser = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName"));
 
-        //        var client = _httpClientFactory.CreateClient();
-        //        string apiKey = _configuration["ApiKey"];
-        //        client.DefaultRequestHeaders.Add("ApiKey", apiKey);
-        //        string apiUrl = _configuration["ApiEndpoint"] + _configuration["BOMMaterialsByCodeEndpoint"];
+                var brand = new BOMItems
+                {
+                    BussCode = sBussCode,
+                    PlantCode = sPlantCode,
+                    ItemName = sItemName,
+                    Status = sStatus,
+                    QtyUsage = sQtyUsage,
+                    Satuan = sSatuan,
+                    LevelSeqn = 0,
+                    ParentId = sParentId,
+                    ParentItem = sParentItem
+                };
 
-        //        var param = new SPParameters
-        //        {
-        //            USERNAME = CF.DecryptString(_configuration["EKey"], HttpContext.User.FindFirstValue("userName")),
-        //            ACTIVEBRANCH = "BMU",
-        //            DATA = dataVal,
-        //        };
+                var json = JsonConvert.SerializeObject(brand);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        //        var json = JsonConvert.SerializeObject(param);
-        //        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        //        HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                var client = _httpClientFactory.CreateClient();
+                string apiKey = _configuration["ApiKey"];
+                client.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                string apiUrl = _configuration["ApiEndpoint"] + _configuration["InvBrandUpdateEndpoint"];
 
+                HttpResponseMessage response = await client.PutAsync(apiUrl, content);
 
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            string responseContent = await response.Content.ReadAsStringAsync();
-        //            List<BOMMaterial> dataList = JsonConvert.DeserializeObject<List<BOMMaterial>>(responseContent);
-        //            return Ok(DataSourceLoader.Load(dataList, loadOptions));
-        //        }
-        //        else
-        //        {
-        //            var errorResponse = await response.Content.ReadAsStringAsync();
-        //            return StatusCode((int)response.StatusCode, errorResponse);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
-        //    }
-        //}
+                if (response.IsSuccessStatusCode)
+                {
+                    return Ok(new { message = "Brand updated successfully.!" });
+                }
+                else
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, errorResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred: " + ex.Message);
+            }
+        }
 
     }
 }

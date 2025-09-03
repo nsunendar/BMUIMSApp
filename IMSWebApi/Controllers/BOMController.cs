@@ -22,7 +22,6 @@ namespace IMSWebApi.Controllers
             try
             {
                 await _connection.OpenAsync();
-
                 using (var command = new SqlCommand("spmGetBOMInventory", _connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
@@ -80,11 +79,11 @@ namespace IMSWebApi.Controllers
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
-                        var itemList = new List<BOMHItem>();
-                        var properties = typeof(BOMHItem).GetProperties();
+                        var itemList = new List<BOMItem>();
+                        var properties = typeof(BOMItem).GetProperties();
                         while (await reader.ReadAsync())
                         {
-                            BOMHItem item = new();
+                            BOMItem item = new();
                             foreach (var property in properties)
                             {
                                 if (!reader.IsDBNull(reader.GetOrdinal(property.Name)))
@@ -258,6 +257,121 @@ namespace IMSWebApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Can't Load GetBOMLevelFG " + ex.Message);
+            }
+        }
+
+        [Route("/[controller]/insertLevelFG")]
+        [HttpPost]
+        public async Task<IActionResult> InsertLevelFG([FromBody] BOMItem bomds)
+        {
+            string resultMsg = string.Empty;
+            int resultNum = 0;
+            using (var command = new SqlCommand("spmInsertBOM", _connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@Id", bomds.Id);
+                command.Parameters.AddWithValue("@BussCode", bomds.BussCode);
+                command.Parameters.AddWithValue("@PlantCode", bomds.PlantCode);
+                command.Parameters.AddWithValue("@ItemCode", bomds.ItemCode);
+                command.Parameters.AddWithValue("@ItemName", (object?)bomds.ItemName ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Status", bomds.Status);
+                command.Parameters.AddWithValue("@QtyUsage", (object?)bomds.QtyUsage ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Satuan", (object?)bomds.Satuan ?? DBNull.Value);
+                command.Parameters.AddWithValue("@LevelSeqn", bomds.LevelSeqn);
+                command.Parameters.AddWithValue("@ParentId", (object?)bomds.ParentId ?? DBNull.Value);
+                command.Parameters.AddWithValue("@ParentItem", (object?)bomds.ParentItem ?? DBNull.Value);
+                //command.Parameters.AddWithValue("@InsertUser", HttpContext.User.Identity?.Name ?? "system");
+                SqlParameter resultMsgParam = new SqlParameter("@ResultMsg", SqlDbType.VarChar, 800)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(resultMsgParam);
+
+                SqlParameter resultNumParam = new SqlParameter("@ResultNum", SqlDbType.Int)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(resultNumParam);
+
+                try
+                {
+                    await _connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
+
+                    resultMsg = resultMsgParam.Value.ToString();
+                    resultNum = (int)resultNumParam.Value;
+
+                    await _connection.CloseAsync();
+                    if (resultNum == 200)
+                    {
+                        return Ok(resultMsg);
+                    }
+                    else
+                    {
+                        return StatusCode(resultNum, resultMsg);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, "Error updating Insert Brand: " + ex.Message);
+                }
+            }
+        }
+
+        [Route("/[controller]/updateLevelFG")]
+        [HttpPut]
+        public async Task<IActionResult> UpdateLevelFG([FromBody] BOMItem bomds)
+        {
+            string resultMsg = string.Empty;
+            int resultNum = 0;
+            using (var command = new SqlCommand("spmUpdateBOM", _connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@Id", bomds.Id);
+                command.Parameters.AddWithValue("@BussCode", bomds.BussCode);
+                command.Parameters.AddWithValue("@PlantCode", bomds.PlantCode);
+                command.Parameters.AddWithValue("@ItemCode", bomds.ItemCode);
+                command.Parameters.AddWithValue("@ItemName", (object?)bomds.ItemName ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Status", bomds.Status);
+                command.Parameters.AddWithValue("@QtyUsage", (object?)bomds.QtyUsage ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Satuan", (object?)bomds.Satuan ?? DBNull.Value);
+                command.Parameters.AddWithValue("@LevelSeqn", bomds.LevelSeqn);
+                command.Parameters.AddWithValue("@ParentId", (object?)bomds.ParentId ?? DBNull.Value);
+                command.Parameters.AddWithValue("@ParentItem", (object?)bomds.ParentItem ?? DBNull.Value);
+                SqlParameter resultMsgParam = new SqlParameter("@ResultMsg", SqlDbType.VarChar, 800)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(resultMsgParam);
+
+                SqlParameter resultNumParam = new SqlParameter("@ResultNum", SqlDbType.Int)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(resultNumParam);
+
+                try
+                {
+                    await _connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
+
+                    resultMsg = resultMsgParam.Value.ToString();
+                    resultNum = (int)resultNumParam.Value;
+
+                    await _connection.CloseAsync();
+                    if (resultNum == 200)
+                    {
+                        return Ok(resultMsg);
+                    }
+                    else
+                    {
+                        return StatusCode(resultNum, resultMsg);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, "Error updating Brand: " + ex.Message);
+                }
             }
         }
 
